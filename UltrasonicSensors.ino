@@ -8,6 +8,7 @@ const int TRIG_PIN3 = 8;
 const int TRIG_PIN4 = 9;
 const int TRIG_PINS[5] = {TRIG_PIN0, TRIG_PIN1, TRIG_PIN2, TRIG_PIN3, TRIG_PIN4};
 
+//Interrupt Pins on Leonardo
 const int ECHO_PIN0 = 0;
 const int ECHO_PIN1 = 1;
 const int ECHO_PIN2 = 2;
@@ -77,7 +78,7 @@ void loop(){
     }
   }
   for(int i=0; i<5; i++){
-    Serial.print("[sensorId");
+    Serial.print("[");
     Serial.print(i);
     Serial.print(", ");
     Serial.print(sensorDistances[i]);
