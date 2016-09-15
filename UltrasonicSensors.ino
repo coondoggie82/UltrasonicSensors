@@ -1,4 +1,6 @@
 
+#include "avr/wdt.h"
+
 #define NOT_AN_INTERRUPT -1
 
 const int TRIG_PIN0 = 4;
@@ -26,6 +28,9 @@ volatile unsigned long sensorEndTimes[5];
 float sensorDistances[5];
 
 void setup(){
+  wdt_disable();
+  Serial.begin(9600);
+  
   for(int i=0; i<5; i++){
     sensorDistances[i] = 0;
     sensorStartTimes[i] = 0;
@@ -50,12 +55,11 @@ void setup(){
   pinMode(ECHO_PIN2, INPUT);
   pinMode(ECHO_PIN3, INPUT);
   pinMode(ECHO_PIN4, INPUT);
+
+  attachAllInterrupts();
   
-  attachInterrupt(digitalPinToInterrupt(ECHO_PIN0), echoChange0, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ECHO_PIN1), echoChange1, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ECHO_PIN2), echoChange2, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ECHO_PIN3), echoChange3, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ECHO_PIN4), echoChange4, CHANGE);
+  wdt_reset();
+  wdt_enable(WDTO_1S);
 }
 
 void loop(){
@@ -66,16 +70,25 @@ void loop(){
   for(int i=0; i<5; i++){
     digitalWrite(TRIG_PINS[i], LOW);
   }
+  boolean working = true;
   for(int i=0; i<5; i++){
     if(!sensorsReading[i]){
       unsigned long pulse_width = sensorEndTimes[i] - sensorStartTimes[i];
       if( pulse_width > MAX_DIST){
         //Serial.print("Out of range: ");
         sensorDistances[i] = 157.48;
-      }else{
+      }
+      else{
         sensorDistances[i] = pulse_width/148.0;
       }
+    }else{
+      working = false;
+      Serial.print("Sensor Reading: ");
+      Serial.println(i);
     }
+  }
+  if(working){
+    wdt_reset();
   }
   for(int i=0; i<5; i++){
     Serial.print("[");
@@ -88,6 +101,13 @@ void loop(){
   delay(50);
 }
 
+void attachAllInterrupts(){
+  attachInterrupt(digitalPinToInterrupt(ECHO_PIN0), echoChange0, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ECHO_PIN1), echoChange1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ECHO_PIN2), echoChange2, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ECHO_PIN3), echoChange3, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ECHO_PIN4), echoChange4, CHANGE);
+}
 void echoChange0(){
   if(!sensorsReading[0]){
     sensorsReading[0] = true;
@@ -137,4 +157,5 @@ void echoChange4(){
     sensorEndTimes[4] = micros();
   }
 }
+
 
